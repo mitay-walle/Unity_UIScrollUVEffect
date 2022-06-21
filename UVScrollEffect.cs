@@ -27,7 +27,11 @@ public class UVScrollEffect : BaseMeshEffect
         for (var i = 0; i < vertCount; i++)
         {
             vh.PopulateUIVertex(ref vert, i);
+#if UNITY_2020_2_OR_NEWER
+            vert.uv0 += (Vector4)scrollDelta;
+#else
             vert.uv0 += scrollDelta;
+#endif
             vh.SetUIVertex(vert, i);
         }
     }
