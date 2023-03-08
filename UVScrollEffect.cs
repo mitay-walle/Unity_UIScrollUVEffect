@@ -1,52 +1,57 @@
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class UVScrollEffect : BaseMeshEffect
 {
-      [SerializeField] private Vector2 _scroll = new Vector2(1, 1);
-        [SerializeField] private bool _playEditor;
-        private Vector2 _scrollDelta;
+    [SerializeField] private Vector2 _scroll = new Vector2(1, 1);
+    [SerializeField] private bool _playEditor;
+    private Vector2 _scrollDelta;
 
-        protected override void OnEnable()
+    protected override void OnEnable()
+    {
+        base.OnEnable();
+#if UNITY_EDITOR
+        EditorApplication.update -= Repaint;
+        EditorApplication.update += Repaint;
+#endif
+    }
+
+    protected override void OnDisable()
+    {
+        base.OnDisable();
+#if UNITY_EDITOR
+        EditorApplication.update -= Repaint;
+#endif
+    }
+
+    public override void ModifyMesh(VertexHelper vh)
+    {
+        if (!IsActive()) return;
+        if (!_playEditor || Application.isPlaying) return;
+
+        int vertCount = vh.currentVertCount;
+
+        _scrollDelta = _scroll * Time.time;
+
+        UIVertex vert = new UIVertex();
+
+        for (var i = 0; i < vertCount; i++)
         {
-            base.OnEnable();
-            EditorApplication.update -= Repaint;
-            EditorApplication.update += Repaint;
-        }
-
-        protected override void OnDisable()
-        {
-            base.OnDisable();
-            EditorApplication.update -= Repaint;
-        }
-
-        public override void ModifyMesh(VertexHelper vh)
-        {
-            if (!IsActive()) return;
-            if (!_playEditor || Application.isPlaying) return;
-
-            int vertCount = vh.currentVertCount;
-
-            _scrollDelta = _scroll * Time.time;
-
-            UIVertex vert = new UIVertex();
-
-            for (var i = 0; i < vertCount; i++)
-            {
-                vh.PopulateUIVertex(ref vert, i);
+            vh.PopulateUIVertex(ref vert, i);
 #if UNITY_2020_2_OR_NEWER
                 vert.uv0 += (Vector4)_scrollDelta;
 #else
             vert.uv0 += scrollDelta;
 #endif
-                vh.SetUIVertex(vert, i);
-            }
+            vh.SetUIVertex(vert, i);
         }
+    }
 
-        private void Update()
-        {
-            graphic.SetVerticesDirty();
-        }
+    private void Update()
+    {
+        graphic.SetVerticesDirty();
+    }
 
 #if UNITY_EDITOR
         private void Repaint()
